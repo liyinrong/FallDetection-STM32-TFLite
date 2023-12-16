@@ -263,7 +263,7 @@ void MX_X_CUBE_AI_Process(void)
 			printf("TFLite inference failed, code %d.\r\n", res);
 			error_handler();
 		}
-		printf("TFLite inference complete, elapsed time: %luns.\r\n", InferenceTime);
+		printf("TFLite inference complete, elapsed time: %luus.\r\n", InferenceTime);
 		post_process(out_data);
 		NewDataFetched = 0U;
 	}
