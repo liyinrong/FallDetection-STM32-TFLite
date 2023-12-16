@@ -85,6 +85,7 @@ void MX_MEMS_Init(void);
 void Peripheral_Reconfig(void);
 void DataFetchHandle(void);
 void ModeSwitchHandle(void);
+void LowPowerHandle(void);
 
 /* USER CODE END PFP */
 
@@ -125,6 +126,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_X_CUBE_AI_Init();
   /* USER CODE BEGIN 2 */
+  __HAL_RCC_WAKEUPSTOP_CLK_CONFIG(RCC_STOP_WAKEUPCLOCK_MSI);
   DWT_Init();
   MX_MEMS_Init();
   Peripheral_Reconfig();
@@ -139,9 +141,10 @@ int main(void)
 	  DataFetchHandle();
     /* USER CODE END WHILE */
 
-	  MX_X_CUBE_AI_Process();
+  MX_X_CUBE_AI_Process();
     /* USER CODE BEGIN 3 */
   	  ModeSwitchHandle();
+  	  LowPowerHandle();
 
   }
   /* USER CODE END 3 */
@@ -163,10 +166,16 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 
+  /** Configure LSE Drive Capability
+  */
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
@@ -195,6 +204,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enable MSI Auto calibration
+  */
+  HAL_RCCEx_EnableMSIPLLMode();
 }
 
 /* USER CODE BEGIN 4 */
@@ -215,12 +228,6 @@ GETCHAR_PROTOTYPE
     ;
   }
   return ch;
-}
-
-__attribute__((weak)) int _write(int file, char* ptr, int len)
-{
-	HAL_UART_Transmit(&huart1, (uint8_t*)ptr, len, HAL_MAX_DELAY);
-	return len;
 }
 
 void DWT_Init(void)
@@ -263,7 +270,7 @@ void MX_MEMS_Init(void)
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_ODR_Value(CUSTOM_LSM6DSL_0, 104.0f));
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_Decimation(CUSTOM_LSM6DSL_0, MOTION_ACCELERO, LSM6DSL_FIFO_XL_NO_DEC));
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_Decimation(CUSTOM_LSM6DSL_0, MOTION_GYRO, LSM6DSL_FIFO_GY_NO_DEC));
-	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_Watermark_Level(CUSTOM_LSM6DSL_0, 180));
+	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_Watermark_Level(CUSTOM_LSM6DSL_0, 90));
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_Write_Register(CUSTOM_LSM6DSL_0, LSM6DSL_INT1_CTRL, 0x8));
 //	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_Mode(CUSTOM_LSM6DSL_0, LSM6DSL_STREAM_MODE));
 
@@ -338,7 +345,7 @@ void DataFetchHandle(void)
 				CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_H, temp_u8+1);
 				CUSTOM_MOTION_SENSOR_FIFO_Get_Pattern(CUSTOM_LSM6DSL_0, &temp_u16);
 			}
-			for(uint8_t i=0; i<20; i++)
+			for(uint8_t i=0; i<10; i++)
 			{
 				for(uint8_t j=3; j<6; j++)
 				{
@@ -386,6 +393,22 @@ void ModeSwitchHandle(void)
 		RecvBufferPTR = 0U;
 		SwitchRequest = 0U;
 	}
+}
+
+void LowPowerHandle(void)
+{
+	HAL_SuspendTick();
+	if(WorkMode == 1U)
+	{
+//		HAL_PWREx_EnableLowPowerRunMode();
+		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	}
+	else
+	{
+		HAL_PWREx_EnterSTOP2Mode(PWR_SLEEPENTRY_WFI);
+		SystemClock_Config();
+	}
+	HAL_ResumeTick();
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
