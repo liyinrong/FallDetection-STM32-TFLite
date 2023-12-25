@@ -27,7 +27,7 @@
  *   based on the C-malloc/free functions.
  */
 
-#include "tensorflow/lite/micro/all_ops_resolver.h"
+//#include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/tflite_bridge/micro_error_reporter.h"

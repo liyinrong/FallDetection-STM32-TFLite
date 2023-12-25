@@ -23,12 +23,12 @@
 
 extern "C" int tflm_io_write(const void *buff, uint16_t count);
 
-extern "C" void DebugLog(const char* s)
+extern "C" void DebugLog(const char* format, va_list args)
 {
-  if (!s)
-    return;
-    
-  size_t sl = strlen(s);
-  if (sl)
-	  tflm_io_write(s, (uint16_t)sl);
+//  if (!s)
+//    return;
+//
+//  size_t sl = strlen(s);
+//  if (sl)
+//	  tflm_io_write(s, (uint16_t)sl);
 }

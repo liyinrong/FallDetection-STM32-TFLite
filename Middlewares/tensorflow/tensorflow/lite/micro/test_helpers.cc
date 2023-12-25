@@ -26,7 +26,6 @@ limitations under the License.
 #include "tensorflow/lite/kernels/internal/compatibility.h"
 #include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
 #include "tensorflow/lite/kernels/kernel_util.h"
-#include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/kernels/kernel_util.h"
 #include "tensorflow/lite/micro/memory_helpers.h"
 #include "tensorflow/lite/micro/micro_arena_constants.h"
@@ -443,11 +442,11 @@ const Model* BuildModelWithUnusedOperatorOutputs() {
           *builder, builder->CreateVector(tensor_shape, tensor_shape_size),
           TensorType_INT8, 0,
           builder->CreateString("test_unused_output_tensor"), 0, false)};
-  constexpr size_t inputs_size = 1;
+  constexpr size_t inputs_size = 0;
   const int32_t inputs[inputs_size] = {};
   constexpr size_t outputs_size = 1;
   const int32_t outputs[outputs_size] = {0};
-  constexpr size_t operator_inputs_size = 1;
+  constexpr size_t operator_inputs_size = 0;
   const int32_t operator_inputs[operator_inputs_size] = {};
   constexpr size_t operator_outputs_size = 2;
   const int32_t operator_outputs[operator_outputs_size] = {0, 1};
@@ -1431,12 +1430,12 @@ const Model* BuildSimpleMockModelWithNullInputsOutputs() {
 
 }  // namespace
 
-const TfLiteRegistration_V1* SimpleStatefulOp::getRegistration() {
+const TFLMRegistration* SimpleStatefulOp::getRegistration() {
   return GetMutableRegistration();
 }
 
-TfLiteRegistration_V1* SimpleStatefulOp::GetMutableRegistration() {
-  static TfLiteRegistration_V1 r;
+TFLMRegistration* SimpleStatefulOp::GetMutableRegistration() {
+  static TFLMRegistration r;
   r.init = Init;
   r.prepare = Prepare;
   r.invoke = Invoke;
@@ -1517,12 +1516,12 @@ TfLiteStatus SimpleStatefulOp::Invoke(TfLiteContext* context,
   return kTfLiteOk;
 }
 
-const TfLiteRegistration_V1* MockCustom::getRegistration() {
+const TFLMRegistration* MockCustom::getRegistration() {
   return GetMutableRegistration();
 }
 
-TfLiteRegistration_V1* MockCustom::GetMutableRegistration() {
-  static TfLiteRegistration_V1 r;
+TFLMRegistration* MockCustom::GetMutableRegistration() {
+  static TFLMRegistration r;
   r.init = Init;
   r.prepare = Prepare;
   r.invoke = Invoke;
@@ -1565,12 +1564,12 @@ TfLiteStatus MockCustom::Invoke(TfLiteContext* context, TfLiteNode* node) {
 
 bool MockCustom::freed_ = false;
 
-const TfLiteRegistration_V1* MultipleInputs::getRegistration() {
+const TFLMRegistration* MultipleInputs::getRegistration() {
   return GetMutableRegistration();
 }
 
-TfLiteRegistration_V1* MultipleInputs::GetMutableRegistration() {
-  static TfLiteRegistration_V1 r;
+TFLMRegistration* MultipleInputs::GetMutableRegistration() {
+  static TFLMRegistration r;
   r.init = Init;
   r.prepare = Prepare;
   r.invoke = Invoke;
@@ -1620,12 +1619,12 @@ TfLiteStatus MultipleInputs::Invoke(TfLiteContext* context, TfLiteNode* node) {
 
 bool MultipleInputs::freed_ = false;
 
-const TfLiteRegistration_V1* NoOp::getRegistration() {
+const TFLMRegistration* NoOp::getRegistration() {
   return GetMutableRegistration();
 }
 
-TfLiteRegistration_V1* NoOp::GetMutableRegistration() {
-  static TfLiteRegistration_V1 r;
+TFLMRegistration* NoOp::GetMutableRegistration() {
+  static TFLMRegistration r;
   r.init = Init;
   r.prepare = Prepare;
   r.invoke = Invoke;
@@ -1877,8 +1876,8 @@ int TestStrcmp(const char* a, const char* b) {
 
 // Create a TfLiteIntArray from an array of ints.  The first element in the
 // supplied array must be the size of the array expressed as an int.
-TfLiteIntArray* IntArrayFromInts(int* int_array) {
-  return reinterpret_cast<TfLiteIntArray*>(int_array);
+TfLiteIntArray* IntArrayFromInts(const int* int_array) {
+  return reinterpret_cast<TfLiteIntArray*>(const_cast<int*>(int_array));
 }
 
 // Create a TfLiteFloatArray from an array of floats.  The first element in the
