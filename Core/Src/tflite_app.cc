@@ -19,9 +19,11 @@ extern "C" {
 
 #define TFLITE_SCHEMA_VERSION (3)
 #define MODEL_DATA			&TinyFallNet_6axis_qat_tflite[0]
-#define TENSOR_AREA_SIZE	19456
+#define TENSOR_ARENA_SIZE	32768
 
 extern const unsigned char TinyFallNet_6axis_qat_tflite[];
+extern const unsigned char ResNet24_6axis_qat_tflite[];
+extern const unsigned char ResNet24_6axis_pqat_tflite[];
 extern const unsigned char ConvLSTM_6axis_q_tflite[];
 extern const unsigned int TinyFallNet_6axis_qat_tflite_len;
 
@@ -39,7 +41,7 @@ extern const unsigned int TinyFallNet_6axis_qat_tflite_len;
 #endif
 
 MEM_ALIGNED(16)
-static uint8_t tensor_arena[TENSOR_AREA_SIZE];
+static uint8_t tensor_arena[TENSOR_ARENA_SIZE];
 
 static const tflite::Model* model = nullptr;
 static tflite::MicroInterpreter* interpreter = nullptr;
@@ -65,7 +67,7 @@ void TFLite_Init(void)
 	    error_handler();
 	}
 	static tflite::MicroMutableOpResolver<kNumberOperators> _resolver = get_resolver();
-    static tflite::MicroInterpreter _interpreter(model, _resolver, tensor_arena, TENSOR_AREA_SIZE, nullptr, nullptr, false);
+    static tflite::MicroInterpreter _interpreter(model, _resolver, tensor_arena, TENSOR_ARENA_SIZE, nullptr, nullptr, false);
 	interpreter = &_interpreter;
     if(interpreter->AllocateTensors() != kTfLiteOk)
     {
