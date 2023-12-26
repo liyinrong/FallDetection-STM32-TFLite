@@ -28,6 +28,7 @@
 #include <string.h>
 #include "custom_motion_sensors.h"
 #include "custom_motion_sensors_ex.h"
+#include "tflite_app.h"
 
 /* USER CODE END Includes */
 
@@ -124,6 +125,7 @@ int main(void)
   MX_CRC_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  TFLite_Init();
   __HAL_RCC_WAKEUPSTOP_CLK_CONFIG(RCC_STOP_WAKEUPCLOCK_MSI);
   DWT_Init();
   MX_MEMS_Init();
@@ -137,6 +139,7 @@ int main(void)
   while (1)
   {
 	  DataFetchHandle();
+	  TFLite_Process();
 
     /* USER CODE END WHILE */
 
