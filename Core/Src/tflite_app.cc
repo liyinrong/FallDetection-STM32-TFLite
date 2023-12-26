@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include "main.h"
 #include "tflite_app.h"
-#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+#include "gen_micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/tflite_bridge/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/schema/schema_generated.h"
@@ -64,20 +64,9 @@ void TFLite_Init(void)
 	        (int)model->version(), (int)TFLITE_SCHEMA_VERSION);
 	    error_handler();
 	}
-	static tflite::MicroMutableOpResolver<11> _resolver;
-    _resolver.AddQuantize();
-    _resolver.AddShape();
-    _resolver.AddStridedSlice();
-    _resolver.AddPack();
-    _resolver.AddReshape();
-    _resolver.AddConv2D();
-    _resolver.AddMaxPool2D();
-    _resolver.AddAdd();
-    _resolver.AddAveragePool2D();
-    _resolver.AddFullyConnected();
-    _resolver.AddSoftmax();
+	static tflite::MicroMutableOpResolver<kNumberOperators> _resolver = get_resolver();
     static tflite::MicroInterpreter _interpreter(model, _resolver, tensor_arena, TENSOR_AREA_SIZE, nullptr, nullptr, false);
-    interpreter = &_interpreter;
+	interpreter = &_interpreter;
     if(interpreter->AllocateTensors() != kTfLiteOk)
     {
     	printf("Failed to allocate tensors.\r\n");
