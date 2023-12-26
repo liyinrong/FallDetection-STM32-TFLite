@@ -88,13 +88,13 @@ extern uint32_t DWT_Stop(void);
 
 void pre_process(uint8_t* data)
 {
-	memcpy(data, (uint8_t*)(RecvBuffer+RecvBufferPTR), (50-RecvBufferPTR)*sizeof(float));
-	memcpy(data+(50-RecvBufferPTR)*sizeof(float), (uint8_t*)RecvBuffer, RecvBufferPTR*sizeof(float));
+	memcpy(data, (uint8_t*)(&RecvBuffer[0][RecvBufferPTR][0]), 6*(50-RecvBufferPTR)*sizeof(float));
+	memcpy(data+6*(50-RecvBufferPTR)*sizeof(float), (uint8_t*)RecvBuffer, 6*RecvBufferPTR*sizeof(float));
 }
 
 void post_process(uint8_t* data)
 {
-	printf("output[0]=%d output[1]=%d\r\n", *(int8_t*)data, *((int8_t*)data+1));
+//	printf("output[0]=%d output[1]=%d\r\n", *(int8_t*)data, *((int8_t*)data+1));
 }
 
 void TFLite_Process(void)
@@ -110,7 +110,7 @@ void TFLite_Process(void)
 	    out_data = (uint8_t *)(output->data.uint8);
 
 		pre_process(in_data);
-		printf("TFLite inference start.\r\n");
+//		printf("TFLite inference start.\r\n");
 		DWT_Start();
 		if (interpreter->Invoke() != kTfLiteOk) {
 			res = -1;
@@ -118,11 +118,12 @@ void TFLite_Process(void)
 		InferenceTime = DWT_Stop();
 		if(res)
 		{
-			printf("TFLite inference failed, code %d.\r\n", res);
+			printf("Inference failed, code %d.\r\n", res);
 			error_handler();
 		}
-		printf("TFLite inference complete, elapsed time: %luus.\r\n", InferenceTime);
+//		printf("TFLite inference complete, elapsed time: %luus.\r\n", InferenceTime);
 		post_process(out_data);
+		printf("Inference completed, output=[%d, %d], elapsed time: %luus.\r\n", *(int8_t*)out_data, *((int8_t*)out_data+1), InferenceTime);
 		NewDataFetched = 0U;
 	}
 }
