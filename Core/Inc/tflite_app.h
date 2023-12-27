@@ -12,8 +12,8 @@
 extern "C" {
 #endif
 
-//#define FLOAT_DATA
-//#define FLOAT_MODEL_INPUT
+#define FLOAT_DATA
+#define FLOAT_MODEL_INPUT
 //#define FLOAT_MODEL_OUTPUT
 
 void TFLite_Init(void);

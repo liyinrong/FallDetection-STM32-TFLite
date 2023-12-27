@@ -13,13 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-// Generated based on TinyFallNet_6axis_qat.tflite.
+// Generated based on TinyFallNet_6axis_qat_dynR.tflite.
 
 #pragma once
 
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 
-constexpr int kNumberOperators = 11;
+constexpr int kNumberOperators = 12;
 
 inline tflite::MicroMutableOpResolver<kNumberOperators> get_resolver()
 {
@@ -28,6 +28,7 @@ inline tflite::MicroMutableOpResolver<kNumberOperators> get_resolver()
   micro_op_resolver.AddAdd();
   micro_op_resolver.AddAveragePool2D();
   micro_op_resolver.AddConv2D();
+  micro_op_resolver.AddDequantize();
   micro_op_resolver.AddFullyConnected();
   micro_op_resolver.AddMaxPool2D();
   micro_op_resolver.AddPack();

@@ -18,13 +18,12 @@ extern "C" {
 #endif
 
 #define TFLITE_SCHEMA_VERSION 	(3)
-#define MODEL_DATA				&TinyFallNet_6axis_qat_FullInt_Rescaled_tflite[0]
+#define MODEL_DATA				&TinyFallNet_6axis_qat_FullInt_FPInput_tflite[0]
 #define TENSOR_ARENA_SIZE		32768
 
-extern const unsigned char TinyFallNet_6axis_qat_tflite[];
+extern const unsigned char TinyFallNet_6axis_qat_dynR_tflite[];
+extern const unsigned char TinyFallNet_6axis_qat_FullInt_FPInput_tflite[];
 extern const unsigned char TinyFallNet_6axis_qat_FullInt_Rescaled_tflite[];
-extern const unsigned char TinyFallNet_6axis_8bitInput_qat_tflite[];
-extern const unsigned char ResNet24_6axis_qat_tflite[];
 
 #if defined(_MSC_VER)
   #define MEM_ALIGNED(x)
