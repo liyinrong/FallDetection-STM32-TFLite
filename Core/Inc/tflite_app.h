@@ -8,6 +8,8 @@
 #ifndef INC_TFLITE_APP_H_
 #define INC_TFLITE_APP_H_
 
+#include "tflite_config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

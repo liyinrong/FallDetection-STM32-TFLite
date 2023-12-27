@@ -17,16 +17,6 @@
 extern "C" {
 #endif
 
-#define TFLITE_SCHEMA_VERSION (3)
-#define MODEL_DATA			&TinyFallNet_6axis_qat_tflite[0]
-#define TENSOR_ARENA_SIZE	32768
-
-extern const unsigned char TinyFallNet_6axis_qat_tflite[];
-extern const unsigned char ResNet24_6axis_qat_tflite[];
-extern const unsigned char ResNet24_6axis_pqat_tflite[];
-extern const unsigned char ConvLSTM_6axis_q_tflite[];
-extern const unsigned int TinyFallNet_6axis_qat_tflite_len;
-
 #if defined(_MSC_VER)
   #define MEM_ALIGNED(x)
 #elif defined(__ICCARM__) || defined (__IAR_SYSTEMS_ICC__)
@@ -80,19 +70,46 @@ void TFLite_Init(void)
 }
 
 extern uint8_t NewDataFetched;
-extern float RecvBuffer[1][50][6];
-extern uint8_t RecvBufferPTR;
 extern uint8_t FallDetected;
+
+#ifdef FLOAT_INPUT
+extern float RecvBuffer[1][50][6];
+#else
+extern uint8_t RecvBuffer[1][50][6];
+#endif
+extern uint8_t RecvBufferPTR;
+
 extern void DWT_Start(void);
 extern uint32_t DWT_Stop(void);
 
-void pre_process(uint8_t* data)
+void pre_process(void* data)
 {
-	memcpy(data, (uint8_t*)(&RecvBuffer[0][RecvBufferPTR][0]), 6*(50-RecvBufferPTR)*sizeof(float));
-	memcpy(data+6*(50-RecvBufferPTR)*sizeof(float), (uint8_t*)RecvBuffer, 6*RecvBufferPTR*sizeof(float));
+	#if defined(FULL_INT_MODEL)
+	int8_t* ptr = (int8_t*)data;
+	TfLiteAffineQuantization *quant = (TfLiteAffineQuantization *)input->quantization.params;
+	float scale = *(quant->scale->data);
+	int zero_point = *(quant->zero_point->data);
+	for(uint8_t i=RecvBufferPTR; i<50; i++)
+	{
+		for(uint8_t j=0; j<6; j++)
+		{
+			*(ptr++) = (int8_t)(RecvBuffer[0][i][j] / scale + zero_point);
+		}
+	}
+	for(uint8_t i=0; i<RecvBufferPTR; i++)
+	{
+		for(uint8_t j=0; j<6; j++)
+		{
+			*(ptr++) = (int8_t)(RecvBuffer[0][i][j] / scale + zero_point);
+		}
+	}
+	#else
+	memcpy((uint8_t*)data, (uint8_t*)(&RecvBuffer[0][RecvBufferPTR][0]), (50-RecvBufferPTR)*(6*sizeof(RecvBuffer[0][0][0])));
+	memcpy((uint8_t*)data+(50-RecvBufferPTR)*(6*sizeof(RecvBuffer[0][0][0])), (uint8_t*)RecvBuffer, RecvBufferPTR*(6*sizeof(RecvBuffer[0][0][0])));
+	#endif
 }
 
-void post_process(uint8_t* data)
+void post_process(void* data)
 {
 //	printf("output[0]=%d output[1]=%d\r\n", *(int8_t*)data, *((int8_t*)data+1));
 }
@@ -123,7 +140,11 @@ void TFLite_Process(void)
 		}
 //		printf("TFLite inference complete, elapsed time: %luus.\r\n", InferenceTime);
 		post_process(out_data);
+		#ifdef FLOAT_OUTPUT
+		printf("Inference completed, output=[%f, %f], elapsed time: %luus.\r\n", *(float*)out_data, *((float*)out_data+1), InferenceTime);
+		#else
 		printf("Inference completed, output=[%d, %d], elapsed time: %luus.\r\n", *(int8_t*)out_data, *((int8_t*)out_data+1), InferenceTime);
+		#endif
 		NewDataFetched = 0U;
 	}
 }

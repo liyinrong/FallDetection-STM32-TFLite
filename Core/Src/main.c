@@ -63,8 +63,6 @@
 /* USER CODE BEGIN PV */
 LSM6DSL_Object_t lsm6dsl_obj;
 //CUSTOM_MOTION_SENSOR_AxesRaw_t AccData, GyrData, MagData;
-float RecvBuffer[1][50][6];
-uint8_t RecvBufferPTR = 0U;
 uint8_t WorkMode = 0U;		//0: Off	1: From host	2: From sensor
 uint8_t SwitchRequest = 0U;
 uint8_t AccGyrRequest = 0U;
@@ -72,6 +70,13 @@ uint8_t MagRequest = 0U;
 uint8_t HostRequest = 0U;
 uint8_t NewDataFetched = 0U;
 uint8_t FallDetected = 0U;
+
+#ifdef FLOAT_INPUT
+float RecvBuffer[1][50][6];
+#else
+uint8_t RecvBuffer[1][50][6];
+#endif
+uint8_t RecvBufferPTR = 0U;
 
 /* USER CODE END PV */
 
@@ -264,7 +269,7 @@ void MX_MEMS_Init(void)
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_Disable(CUSTOM_LSM6DSL_0, MOTION_ACCELERO));
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_Disable(CUSTOM_LSM6DSL_0, MOTION_GYRO));
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_SetFullScale(CUSTOM_LSM6DSL_0, MOTION_ACCELERO, 4));
-	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_SetFullScale(CUSTOM_LSM6DSL_0, MOTION_GYRO, 1000));
+	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_SetFullScale(CUSTOM_LSM6DSL_0, MOTION_GYRO, 500));
 //	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_Write_Register(CUSTOM_LSM6DSL_0, LSM6DSL_MASTER_CONFIG, 0x0));
 //	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_Write_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_CTRL2, 0x0));
 	BSP_RET_CHECK(CUSTOM_MOTION_SENSOR_FIFO_Set_ODR_Value(CUSTOM_LSM6DSL_0, 104.0f));
@@ -326,6 +331,7 @@ void DataFetchHandle(void)
 {
 	uint8_t temp_u8[2];
 	uint16_t temp_u16;
+	float* ptr;
 	if(WorkMode == 1U)
 	{
 		if(HostRequest)
@@ -361,14 +367,22 @@ void DataFetchHandle(void)
 				{
 					CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_L, temp_u8);
 					CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_H, temp_u8+1);
-					RecvBuffer[0][RecvBufferPTR][j] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * 0.001f);
+					#ifdef FLOAT_INPUT
+					RecvBuffer[0][RecvBufferPTR][j] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_500DPS * 0.001f);
+					#else
+					RecvBuffer[0][RecvBufferPTR][j] = (int8_t)(temp_u8[1]);
+					#endif
 				}
 				RecvBuffer[0][RecvBufferPTR][5] = -RecvBuffer[0][RecvBufferPTR][5];
 				for(uint8_t j=0; j<3; j++)
 				{
 					CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_L, temp_u8);
 					CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_H, temp_u8+1);
+					#ifdef FLOAT_INPUT
 					RecvBuffer[0][RecvBufferPTR][j] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * 0.001f);
+					#else
+					RecvBuffer[0][RecvBufferPTR][j] = (int8_t)(temp_u8[1]);
+					#endif
 				}
 				RecvBuffer[0][RecvBufferPTR][2] = -RecvBuffer[0][RecvBufferPTR][2];
 				RecvBufferPTR = (RecvBufferPTR + 1U) % 50U;
@@ -393,30 +407,30 @@ void DataFetchHandle(void)
 			{
 				CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_STATUS_REG, temp_u8);
 			}
+			ptr = (float*)RecvBuffer;
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTX_L_XL, temp_u8);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTX_H_XL, temp_u8+1);
-			RecvBuffer[0][0][0] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * 0.001f);
+			*(ptr) = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * 0.001f);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTY_L_XL, temp_u8);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTY_H_XL, temp_u8+1);
-			RecvBuffer[0][0][1] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * 0.001f);
+			*(ptr+1) = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * 0.001f);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTZ_L_XL, temp_u8);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTZ_H_XL, temp_u8+1);
-			RecvBuffer[0][0][2] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * -0.001f);
+			*(ptr+2) = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_ACC_SENSITIVITY_FS_4G * -0.001f);
 
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTX_L_G, temp_u8);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTX_H_G, temp_u8+1);
-			RecvBuffer[0][0][3] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * 0.001f);
+			*(ptr+3) = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * 0.001f);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTY_L_G, temp_u8);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTY_H_G, temp_u8+1);
-			RecvBuffer[0][0][4] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * 0.001f);
+			*(ptr+4) = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * 0.001f);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTZ_L_G, temp_u8);
 			CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_OUTZ_H_G, temp_u8+1);
-			RecvBuffer[0][0][5] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * -0.001f);
+			*(ptr+5) = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * -0.001f);
 
 //			printf("AccGyr data fetched.\r\n");
 			printf("Ax=%f  Ay=%f  Az=%f  Gx=%f  Gy=%f  Gz=%f\r\n",
-					RecvBuffer[0][0][0], RecvBuffer[0][0][1], RecvBuffer[0][0][2],
-					RecvBuffer[0][0][3], RecvBuffer[0][0][4], RecvBuffer[0][0][5]);
+					*(ptr), *(ptr+1), *(ptr+2),	*(ptr+3), *(ptr+4), *(ptr+5));
 
 			AccGyrRequest = 0U;
 		}
