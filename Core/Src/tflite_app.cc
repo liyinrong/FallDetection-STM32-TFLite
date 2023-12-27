@@ -17,6 +17,15 @@
 extern "C" {
 #endif
 
+#define TFLITE_SCHEMA_VERSION 	(3)
+#define MODEL_DATA				&TinyFallNet_6axis_qat_FullInt_Rescaled_tflite[0]
+#define TENSOR_ARENA_SIZE		32768
+
+extern const unsigned char TinyFallNet_6axis_qat_tflite[];
+extern const unsigned char TinyFallNet_6axis_qat_FullInt_Rescaled_tflite[];
+extern const unsigned char TinyFallNet_6axis_8bitInput_qat_tflite[];
+extern const unsigned char ResNet24_6axis_qat_tflite[];
+
 #if defined(_MSC_VER)
   #define MEM_ALIGNED(x)
 #elif defined(__ICCARM__) || defined (__IAR_SYSTEMS_ICC__)
@@ -72,7 +81,7 @@ void TFLite_Init(void)
 extern uint8_t NewDataFetched;
 extern uint8_t FallDetected;
 
-#ifdef FLOAT_INPUT
+#ifdef FLOAT_DATA
 extern float RecvBuffer[1][50][6];
 #else
 extern uint8_t RecvBuffer[1][50][6];
@@ -84,7 +93,7 @@ extern uint32_t DWT_Stop(void);
 
 void pre_process(void* data)
 {
-	#if defined(FULL_INT_MODEL)
+	#if not defined(FLOAT_MODEL_INPUT)
 	int8_t* ptr = (int8_t*)data;
 	TfLiteAffineQuantization *quant = (TfLiteAffineQuantization *)input->quantization.params;
 	float scale = *(quant->scale->data);
@@ -140,7 +149,7 @@ void TFLite_Process(void)
 		}
 //		printf("TFLite inference complete, elapsed time: %luus.\r\n", InferenceTime);
 		post_process(out_data);
-		#ifdef FLOAT_OUTPUT
+		#ifdef FLOAT_MODEL_OUTPUT
 		printf("Inference completed, output=[%f, %f], elapsed time: %luus.\r\n", *(float*)out_data, *((float*)out_data+1), InferenceTime);
 		#else
 		printf("Inference completed, output=[%d, %d], elapsed time: %luus.\r\n", *(int8_t*)out_data, *((int8_t*)out_data+1), InferenceTime);

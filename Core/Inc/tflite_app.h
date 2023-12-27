@@ -8,11 +8,13 @@
 #ifndef INC_TFLITE_APP_H_
 #define INC_TFLITE_APP_H_
 
-#include "tflite_config.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//#define FLOAT_DATA
+//#define FLOAT_MODEL_INPUT
+//#define FLOAT_MODEL_OUTPUT
 
 void TFLite_Init(void);
 void TFLite_Process(void);
