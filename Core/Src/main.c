@@ -74,7 +74,7 @@ uint8_t FallDetected = 0U;
 #ifdef FLOAT_DATA
 float RecvBuffer[1][50][6];
 #else
-uint8_t RecvBuffer[1][50][6];
+int8_t RecvBuffer[1][50][6];
 #endif
 uint8_t RecvBufferPTR = 0U;
 

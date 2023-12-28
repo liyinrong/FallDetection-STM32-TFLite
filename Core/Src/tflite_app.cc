@@ -18,12 +18,13 @@ extern "C" {
 #endif
 
 #define TFLITE_SCHEMA_VERSION 	(3)
-#define MODEL_DATA				&TinyFallNet_6axis_qat_FullInt_FPInput_tflite[0]
+#define MODEL_DATA				&TinyFallNet_6axis_qat_FullInt_Rescaled_tflite[0]
 #define TENSOR_ARENA_SIZE		32768
 
 extern const unsigned char TinyFallNet_6axis_qat_dynR_tflite[];
 extern const unsigned char TinyFallNet_6axis_qat_FullInt_FPInput_tflite[];
 extern const unsigned char TinyFallNet_6axis_qat_FullInt_Rescaled_tflite[];
+extern const unsigned char TinyFallNet_6axis_pqat_FullInt_Rescaled_tflite[];
 
 #if defined(_MSC_VER)
   #define MEM_ALIGNED(x)
@@ -83,7 +84,7 @@ extern uint8_t FallDetected;
 #ifdef FLOAT_DATA
 extern float RecvBuffer[1][50][6];
 #else
-extern uint8_t RecvBuffer[1][50][6];
+extern int8_t RecvBuffer[1][50][6];
 #endif
 extern uint8_t RecvBufferPTR;
 
@@ -93,7 +94,7 @@ extern uint32_t DWT_Stop(void);
 void pre_process(void* data)
 {
 	#if not defined(FLOAT_MODEL_INPUT)
-	int8_t* ptr = (int8_t*)data;
+	int8_t* __restrict__ ptr = (int8_t*)data;
 	TfLiteAffineQuantization *quant = (TfLiteAffineQuantization *)input->quantization.params;
 	float scale = *(quant->scale->data);
 	int zero_point = *(quant->zero_point->data);
