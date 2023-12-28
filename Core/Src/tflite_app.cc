@@ -93,7 +93,7 @@ extern uint32_t DWT_Stop(void);
 
 void pre_process(void* data)
 {
-	#if not defined(FLOAT_MODEL_INPUT)
+	#ifndef FLOAT_MODEL_INPUT
 	int8_t* __restrict__ ptr = (int8_t*)data;
 	TfLiteAffineQuantization *quant = (TfLiteAffineQuantization *)input->quantization.params;
 	float scale = *(quant->scale->data);
