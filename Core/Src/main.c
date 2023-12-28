@@ -372,9 +372,9 @@ void DataFetchHandle(void)
 					CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_L, temp_u8);
 					CUSTOM_MOTION_SENSOR_Read_Register(CUSTOM_LSM6DSL_0, LSM6DSL_FIFO_DATA_OUT_H, temp_u8+1);
 					#ifdef FLOAT_DATA
-					RecvBuffer[0][RecvBufferPTR][j] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * 0.001f);
+					RecvBuffer[0][RecvBufferPTR][j] = (int16_t)(((int16_t)temp_u8[1] << 8) | temp_u8[0]) * (LSM6DSL_GYRO_SENSITIVITY_FS_1000DPS * -0.001f);
 					#else
-					RecvBuffer[0][RecvBufferPTR][j] = (int8_t)(temp_u8[1]);
+					RecvBuffer[0][RecvBufferPTR][j] = -(int8_t)(temp_u8[1]);
 					#endif
 				}
 				RecvBuffer[0][RecvBufferPTR][5] = -RecvBuffer[0][RecvBufferPTR][5];
