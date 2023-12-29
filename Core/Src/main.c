@@ -458,6 +458,9 @@ void ModeSwitchHandle(void)
 	if(SwitchRequest)
 	{
 		WorkMode = (WorkMode + 1U) % 4U;
+		#ifdef PROFILING
+		WorkMode = (WorkMode==2U) ? 3U : WorkMode;
+		#endif
 		Peripheral_Reconfig();
 		printf("Mode %u selected.\r\n", WorkMode);
 		AccGyrRequest = 0U;

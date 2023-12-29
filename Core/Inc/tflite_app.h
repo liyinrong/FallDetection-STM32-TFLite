@@ -15,6 +15,7 @@ extern "C" {
 //#define FLOAT_DATA
 //#define FLOAT_MODEL_INPUT
 //#define FLOAT_MODEL_OUTPUT
+//#define PROFILING
 
 void TFLite_Init(void);
 void TFLite_Process(void);

@@ -11,6 +11,7 @@
 #include "gen_micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/tflite_bridge/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
+#include "tensorflow/lite/micro/micro_profiler.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
 #ifdef __cplusplus
@@ -44,6 +45,7 @@ static uint8_t tensor_arena[TENSOR_ARENA_SIZE];
 
 static const tflite::Model* model = nullptr;
 static tflite::MicroInterpreter* interpreter = nullptr;
+static tflite::MicroProfiler* profiler = nullptr;
 static TfLiteTensor* input = nullptr;
 static TfLiteTensor* output = nullptr;
 
@@ -66,7 +68,11 @@ void TFLite_Init(void)
 	    error_handler();
 	}
 	static tflite::MicroMutableOpResolver<kNumberOperators> _resolver = get_resolver();
-    static tflite::MicroInterpreter _interpreter(model, _resolver, tensor_arena, TENSOR_ARENA_SIZE, nullptr, nullptr, false);
+	#ifdef PROFILING
+	static tflite::MicroProfiler _profiler;
+	profiler = &_profiler;
+	#endif
+    static tflite::MicroInterpreter _interpreter(model, _resolver, tensor_arena, TENSOR_ARENA_SIZE, nullptr, profiler, false);
 	interpreter = &_interpreter;
     if(interpreter->AllocateTensors() != kTfLiteOk)
     {
@@ -136,6 +142,9 @@ void TFLite_Process(void)
 	    out_data = (uint8_t *)(output->data.uint8);
 
 		pre_process(in_data);
+		#ifdef PROFILING
+		profiler->ClearEvents();
+		#endif
 //		printf("TFLite inference start.\r\n");
 		DWT_Start();
 		if (interpreter->Invoke() != kTfLiteOk) {
@@ -153,6 +162,12 @@ void TFLite_Process(void)
 		printf("Inference completed, output=[%f, %f], elapsed time: %luus.\r\n", *(float*)out_data, *((float*)out_data+1), InferenceTime);
 		#else
 		printf("Inference completed, output=[%d, %d], elapsed time: %luus.\r\n", *(int8_t*)out_data, *((int8_t*)out_data+1), InferenceTime);
+		#endif
+		#ifdef PROFILING
+		printf("Profiling log:\r\n");
+		profiler->LogCsv();
+		printf("Profiling summary:\r\n");
+		profiler->LogTicksPerTagCsv();
 		#endif
 		NewDataFetched = 0U;
 	}
